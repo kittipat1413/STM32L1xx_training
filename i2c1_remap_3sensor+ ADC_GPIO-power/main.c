@@ -113,23 +113,23 @@ int main(void)
   while (1)
   {
     i2c1_Init_Remap();
-    usart_puts("i2c1-init\n");
+    usart_puts("i2c1-remap-init\n");
 
     delay(5000);
-    usart_puts("i2c1-ready\n");
+    usart_puts("i2c1-remap-ready\n");
 
   
 
     if(SHT20ReadTemperature(I2C1, &rawTemperature))
     {
       tempTemperature = rawTemperature; // * (175.72 / 65536.0) -46.85;
-      sprintf(buffer, "Temp1: %f\r\n", tempTemperature);
+      sprintf(buffer, "Temp2: %f\r\n", tempTemperature);
       usart_puts(buffer);
     }
     if(SHT20ReadHumidity(I2C1, &rawHumidity))
     {
       tempHumidity = rawHumidity; // * (175.72 / 65536.0) -46.85;
-      sprintf(buffer, "Humi1: %f\r\n", tempHumidity);
+      sprintf(buffer, "Humi2: %f\r\n", tempHumidity);
       usart_puts(buffer);
     }
 
@@ -138,23 +138,23 @@ int main(void)
 
 
     i2c1_Init();
-    usart_puts("i2c1-remap-init\n");
+    usart_puts("i2c1-init\n");
     OEM_ACTIVE(I2C1);
     delay(5000);
-    usart_puts("i2c1-remap-ready\n");
+    usart_puts("i2c1-ready\n");
 
 
     if(SHT20ReadTemperature(I2C1, &rawTemperature))
     {
       tempTemperature = rawTemperature; // * (175.72 / 65536.0) -46.85;
-      sprintf(buffer, "Temp2: %f", tempTemperature);
+      sprintf(buffer, "Temp1: %f", tempTemperature);
       usart_puts(buffer);
     }
 
     if(SHT20ReadHumidity(I2C1, &rawHumidity))
     {
       tempHumidity = rawHumidity; // * (175.72 / 65536.0) -46.85;
-      sprintf(buffer, "    Humi2: %f", tempHumidity);
+      sprintf(buffer, "    Humi1: %f", tempHumidity);
       usart_puts(buffer);
     }
 
