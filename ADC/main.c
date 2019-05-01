@@ -40,6 +40,8 @@ void USART_Config(void);
 void USART2_IRQHandler(void);
 /* Private setup functions ---------------------------------------------------------*/
 void RCC_setup_HSI(void);
+void RCC_setup_MSI(void);
+
 void GPIO_setup(void);
 void ADC_Config(void);
 /* Private user define functions ---------------------------------------------------------*/

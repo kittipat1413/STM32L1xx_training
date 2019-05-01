@@ -44,6 +44,7 @@ void delay(unsigned long ms);
 void send_byte(uint8_t b);
 void usart_puts(char* s);
 void USART2_IRQHandler(void);
+void RCC_setup_MSI(void);
 /**
   * @brief  Main program.
   * @param  None
@@ -70,7 +71,7 @@ int main(void)
     //  Delay 0.5 sec 
     delay(5);
 
-    // usart_puts("Hello");
+    usart_puts("Hello");
     /* LED at PB9 ON */
     GPIO_SetBits(GPIOB,GPIO_Pin_7);
 	/* Delay 0.5 sec */
