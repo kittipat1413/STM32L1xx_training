@@ -38,11 +38,15 @@
 /* Private setup functions ---------------------------------------------------------*/
 void RCC_setup_HSI(void);
 void GPIO_setup(void);
-void USART_Config(void);
+void USART1_Config(void);
+void USART2_Config(void);
 /* Private user define functions ---------------------------------------------------------*/
 void delay(unsigned long ms);
-void send_byte(uint8_t b);
-void usart_puts(char* s);
+void send_byte1(uint8_t b);
+void usart_puts1(char* s);
+void send_byte2(uint8_t b);
+void usart_puts2(char* s);
+void USART1_IRQHandler(void);
 void USART2_IRQHandler(void);
 void RCC_setup_MSI(void);
 /**
@@ -55,33 +59,28 @@ void RCC_setup_MSI(void);
 int main(void)
 {
   RCC_setup_HSI();
-  GPIO_setup();
-  USART_Config();
-  // I2C1_init();
+  USART1_Config();
+  USART2_Config();
 
   while (1)
   {
 
-    /* LED at PB9 ON */
-    GPIO_SetBits(GPIOB,GPIO_Pin_7);
-    /* Delay 0.5 sec */
-    delay(5);
-    /* LED at PB9 OFF */
-    GPIO_ResetBits(GPIOB,GPIO_Pin_7);
-    //  Delay 0.5 sec 
-    delay(5);
-
-    usart_puts("Hello");
-    /* LED at PB9 ON */
-    GPIO_SetBits(GPIOB,GPIO_Pin_7);
-	/* Delay 0.5 sec */
-	delay(5);
-	/* LED at PB9 OFF */
-	GPIO_ResetBits(GPIOB,GPIO_Pin_7);
-	//  Delay 0.5 sec 
-	delay(5);
+  usart_puts1("Hello from usart1\n");
+	delay(2000);
+  //usart_puts2("Hello from usart2\n");
+  //delay(2000);
 
   }
+}
+
+void USART1_IRQHandler(void)
+{
+    char b;
+    if(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == SET) {
+
+          b =  USART_ReceiveData(USART1);
+          usart_puts1("rx usart1");
+        }
 }
 void USART2_IRQHandler(void)
 {
@@ -89,11 +88,26 @@ void USART2_IRQHandler(void)
     if(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) == SET) {
 
           b =  USART_ReceiveData(USART2);
-          usart_puts("hello");
+          usart_puts2("rx usart2");
         }
 }
 
-void send_byte(uint8_t b)
+void send_byte1(uint8_t b)
+{
+  /* Send one byte */
+  USART_SendData(USART1, b);
+
+  /* Loop until USART2 DR register is empty */
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+}
+void usart_puts1(char* s)
+{
+    while(*s) {
+      send_byte1(*s);
+        s++;
+    }
+}
+void send_byte2(uint8_t b)
 {
   /* Send one byte */
   USART_SendData(USART2, b);
@@ -101,16 +115,81 @@ void send_byte(uint8_t b)
   /* Loop until USART2 DR register is empty */
   while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
 }
-void usart_puts(char* s)
+void usart_puts2(char* s)
 {
     while(*s) {
-      send_byte(*s);
+      send_byte2(*s);
         s++;
     }
 }
 
+void USART1_Config(void)  
+{
+  USART_InitTypeDef USART_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  
+  /* Enable GPIO clock */
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+  
+  /* Enable USART clock */
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1,ENABLE);
+  
+  /* Connect PXx to USARTx_Tx */
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
+  
+  /* Connect PXx to USARTx_Rx */
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
 
-void USART_Config(void)
+  
+  /* Configure USART Tx and Rx as alternate function push-pull */
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+   //USARTx configuration ----------------------------------------------------
+  //  USARTx configured as follow:
+  // - BaudRate = 230400 baud  
+  // - Word Length = 8 Bits
+  // - One Stop Bit
+  // - No parity
+  // - Hardware flow control disabled (RTS and CTS signals)
+  // - Receive and transmit enabled
+  
+  USART_InitStructure.USART_BaudRate = 9600;
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;
+  USART_InitStructure.USART_Parity = USART_Parity_No;
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+  USART_Init(USART1, &USART_InitStructure);
+  
+  /* NVIC configuration */
+  /* Configure the Priority Group to 2 bits */
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+  
+  /* Enable the USARTx Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+  
+
+  USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
+  USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+  /* Enable USART */
+  USART_Cmd(USART1, ENABLE);
+}
+
+
+void USART2_Config(void)
 {
   USART_InitTypeDef USART_InitStructure;
   NVIC_InitTypeDef NVIC_InitStructure;
@@ -163,7 +242,7 @@ void USART_Config(void)
   
   /* Enable the USARTx Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
@@ -231,12 +310,12 @@ void GPIO_setup(void)
 
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
-// delay 1 ms per count @ Crystal 16.0 MHz 
+// delay 1 ms per count @ Crystal 8.0 MHz 
 void delay(unsigned long ms)
 {
-	volatile unsigned long i,j;
-	for (i = 0; i < ms; i++ )
-	for (j = 0; j < 1227; j++ );
+  volatile unsigned long i,j;
+  for (i = 0; i < ms; i++ )
+  for (j = 0; j < 1460; j++ );
 }
 
 #ifdef  USE_FULL_ASSERT
