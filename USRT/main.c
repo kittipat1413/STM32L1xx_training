@@ -67,8 +67,8 @@ int main(void)
 
   usart_puts1("Hello from usart1\n");
 	delay(2000);
-  //usart_puts2("Hello from usart2\n");
-  //delay(2000);
+  usart_puts2("Hello from usart2\n");
+  delay(2000);
 
   }
 }
