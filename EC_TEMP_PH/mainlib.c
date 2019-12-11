@@ -265,7 +265,7 @@ void init_usart2(void)
   GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_USART2);
   
   /* Connect PXx to USARTx_Rx */
-  GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
 
   
   /* Configure USART Tx and Rx as alternate function push-pull */
@@ -351,7 +351,7 @@ int main(void)
   GPIO_SetBits(GPIOA, GPIO_Pin_11);
   //PH POWER
   GPIO_SetBits(GPIOA,GPIO_Pin_12);
-  //EC 485 TX
+  //EC 485 TX POWER
   GPIO_SetBits(GPIOB, GPIO_Pin_13);
 
   usart_puts2("\r\nInit OK\r\n");
